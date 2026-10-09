@@ -18,11 +18,11 @@ The wait queue expresses “data available or stopping.” A producer changes st
 
 ## ABI and ioctl numbering
 
-`_IOR` and `_IO` encode direction, type, command number, and payload size into an ioctl request. A strict exact-command switch rejects unexpected encodings with `ENOTTY`. Fixed-width Linux UAPI types and explicit ABI version fields reduce layout ambiguity, but 32/64-bit compatibility and padding rules still require compile-time tests on both ABIs. Reserved fields should remain zero and must not be repurposed casually.
+`_IOR` and `_IO` encode direction, type, command number, and payload size into an ioctl request. A strict exact-command switch rejects unexpected encodings with `ENOTTY`. Fixed-width Linux UAPI types and explicit ABI version fields reduce layout ambiguity. The smoke suite compiles layout assertions for native and `-m32` targets; a loaded 64-bit kernel serving a 32-bit process still needs a compat runtime test. Reserved fields should remain zero and must not be repurposed casually. Event sequence and timestamp are kernel-owned: injection rejects nonzero user input, and enqueue fills them while holding the ring lock.
 
 ## Queue full, signals, and copy faults
 
-When the ring is full, the kernel increments `dropped` and returns `ENOSPC`. A blocked `wait_event_interruptible` may return an interruption code when a signal arrives. If the queue record has already been removed and `copy_to_user` fails, this implementation increments the drop count; it does not retry/requeue that event. These are visible delivery semantics, not exactly-once delivery.
+When the ring is full, the kernel increments `dropped` and returns `ENOSPC`. Synthetic writes are disabled unless the load-time module parameter explicitly enables them, and they also require `CAP_SYS_ADMIN`. A blocked `wait_event_interruptible` may return an interruption code when a signal arrives. If the queue record has already been removed and `copy_to_user` fails, this implementation increments the drop count; it does not retry/requeue that event. These are visible delivery semantics, not exactly-once delivery.
 
 ## Official references
 

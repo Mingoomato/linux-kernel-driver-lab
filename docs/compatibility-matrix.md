@@ -5,3 +5,5 @@
 | Kali Linux (current host) | `7.1.5+kali-amd64` | matching headers installed | module build passed | not run; host not detected as VM |
 | Ubuntu 24.04 | not measured | not measured | not run | not run |
 | Rocky Linux 9 | not measured | not measured | not run | not run |
+
+UAPI layout compilation on the current x86_64 toolchain passed for both native and `-m32` targets. This does not establish 32-bit process compatibility with a loaded 64-bit kernel or compatibility across kernel releases.

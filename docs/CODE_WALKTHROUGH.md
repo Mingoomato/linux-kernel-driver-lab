@@ -2,7 +2,7 @@
 
 ## 1. UAPI first
 
-`include/uapi/securewatch_uapi.h` defines ABI version 1, fixed-width integer fields, a 64-byte payload, stats structure, ioctl magic, and three exact commands. `tests/uapi_layout.c` compiles static assertions about structure layout and ioctl encodings. Field order and sizes are part of the ABI; do not edit them in place without a versioned compatibility decision.
+`include/uapi/securewatch_uapi.h` defines ABI version 1, fixed-width integer fields, a 64-byte payload, stats structure, ioctl magic, and three exact commands. `tests/uapi_layout.c` compiles static assertions about field offsets, structure layout, and ioctl encodings for native and optional `-m32` targets. This checks structure layout, not a 32-bit process talking to a loaded 64-bit kernel. Field order and sizes are part of the ABI; do not edit them in place without a versioned compatibility decision.
 
 ## 2. Module state and registration
 
@@ -12,7 +12,7 @@
 
 ## 3. Injection path
 
-Userspace `sw_inject` zeroes a structure and writes exactly one full record. Kernel `sw_write` validates capability and size before copying. It uses `copy_from_user`, checks ABI version, event type, payload length, flags, and that unused payload bytes are zero. `sw_enqueue` takes the spinlock, checks shutdown/capacity, sets sequence and timestamp, copies to the tail slot, updates counters/indexes, unlocks, and wakes the wait queue.
+Userspace `sw_inject` zeroes a structure and writes exactly one full record. Kernel `sw_write` first requires the load-time `allow_lab_injection=1` parameter (default off), then validates capability and size before copying. It uses `copy_from_user`, checks ABI version, event type, payload length, flags, zero sequence/timestamp inputs, and that unused payload bytes are zero. `sw_enqueue` takes the spinlock, checks shutdown/capacity, sets sequence and timestamp, copies to the tail slot, updates counters/indexes, unlocks, and wakes the wait queue.
 
 ## 4. Read path and the concurrent-reader fix
 

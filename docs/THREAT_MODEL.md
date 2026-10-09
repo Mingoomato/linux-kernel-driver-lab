@@ -6,7 +6,7 @@ User memory is untrusted. The driver checks record size and ABI fields, uses cop
 
 ## Access and lifecycle
 
-The device mode is 0600. Synthetic event writes and counter reset require CAP_SYS_ADMIN. The module does not load on behalf of the CLI. Kernel build/load/unload experiments require a disposable VM because a bug can panic the guest.
+The device mode is 0600. Synthetic event writes are disabled unless `allow_lab_injection=1` is explicitly set at module load; writes and counter reset also require CAP_SYS_ADMIN. The module does not load on behalf of the CLI. Kernel build/load/unload experiments require a disposable VM because a bug can panic the guest.
 
 ## Residual risks
 

@@ -30,9 +30,9 @@ Use a VM-safe test method to supply an invalid userspace buffer to the read path
 
 **Goal:** Verify bounded FIFO overflow, statistics, wakeups, and forward progress.
 
-**Starting points:** `SW_RING_CAPACITY`, `sw_enqueue`, `sw_read`, `sw_poll`, `sw_ioctl`, and UAPI tests.
+**Starting points:** `SW_RING_CAPACITY`, `sw_write`, `sw_enqueue`, `sw_read`, `sw_poll`, `sw_ioctl`, and UAPI tests.
 
-In the guarded VM, enqueue more records than capacity without a reader, capture expected `ENOSPC` and `dropped`, then start readers and test that a poller wakes and the queue drains. Repeat with multiple writers/readers and document ordering guarantees.
+In the guarded VM, enqueue more records than capacity without a reader, capture expected `ENOSPC` and `dropped`, then start readers and test that a poller wakes and the queue drains. Include malformed records with a nonzero sequence or timestamp and confirm the UAPI rule. Repeat with multiple writers/readers and document ordering guarantees.
 
 **Constraints:** Use only synthetic short messages. Always allow the VM test trap to unload the module. Keep the no-VM compile and userspace tests separate from privileged runtime results.
 

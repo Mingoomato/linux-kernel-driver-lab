@@ -12,7 +12,7 @@ if ! command -v systemd-detect-virt >/dev/null 2>&1 ||
 fi
 module="$(dirname "$0")/../kernel/securewatch.ko"
 device=/dev/securewatch
-sudo insmod "$module"
+sudo insmod "$module" allow_lab_injection=1
 cleanup() { sudo rmmod securewatch 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
 test -c "$device"

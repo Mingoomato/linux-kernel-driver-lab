@@ -4,7 +4,7 @@
 
 This repository is a small out-of-tree Linux misc-device lab. It teaches a versioned userspace ABI, kernel/user memory boundaries, bounded queues, blocking and nonblocking reads, poll notification, ioctl validation, synchronization, and module lifecycle. It handles only synthetic records; it has no file-system hooks, process-memory access, or production protection behavior.
 
-`make test` and the module compile passed against the current Linux `7.1.5+kali-amd64` headers. The test checks userspace/UAPI layout and non-device behavior. The module was not loaded because the current host is not detected as a VM and the qemu runtime is unavailable. Blocking `read` was updated to re-check the ring after wakeup so concurrent readers do not return a spurious `EAGAIN` from the blocking path; compile and userspace checks passed after this change. Runtime concurrency, load/unload, poll, overflow, copy fault, KASAN/KCSAN, 32-bit compat, and second-kernel tests remain unverified. The compatibility matrix is one current-host compile result, not a portability claim.
+`make test` and the module compile passed against the current Linux `7.1.5+kali-amd64` headers. The smoke checks native and `-m32` UAPI layout compilation, CLI non-device behavior, and refusal by the VM script without explicit opt-in. The module was not loaded because the current host is not detected as a VM and the qemu runtime is unavailable. Blocking `read` re-checks the ring after wakeup so concurrent readers do not return a spurious empty result; injected records now require kernel-owned sequence/timestamp fields to be zero. Runtime concurrency, load/unload, poll, overflow, copy fault, KASAN/KCSAN, 32-bit compat dispatch, and second-kernel tests remain unverified. Static 32-bit layout compilation is not a compat runtime claim.
 
 ## Why each subsystem exists
 
@@ -22,7 +22,7 @@ This repository is a small out-of-tree Linux misc-device lab. It teaches a versi
 
 ### Event injection
 
-`swctl inject-lab-event` creates a zero-initialized `sw_event_v1`, fills ABI version/type/payload, and writes exactly one structure. The kernel checks `CAP_SYS_ADMIN`, exact write size, ABI/type, payload length, flags, and zeroed payload tail with `copy_from_user`. `sw_enqueue` acquires the ring spinlock, rejects shutdown/full state, assigns sequence and real-time timestamp, writes the record, updates counters/indexes, releases the lock, then wakes readers.
+`swctl inject-lab-event` creates a zero-initialized `sw_event_v1`, fills ABI version/type/payload, and writes exactly one structure. Injection is disabled by default and requires the load-time `allow_lab_injection=1` parameter plus `CAP_SYS_ADMIN`. The kernel checks those gates, exact write size, ABI/type, payload length, flags, zeroed payload tail, and zero user-provided sequence/timestamp with `copy_from_user`. `sw_enqueue` acquires the ring spinlock, rejects shutdown/full state, assigns sequence and real-time timestamp, writes the record, updates counters/indexes, releases the lock, then wakes readers.
 
 ### Read/listen
 
@@ -45,7 +45,7 @@ The userspace client uses `poll` before `read`, validates the returned fixed-siz
 
 ## Security assumptions and failure modes
 
-Userspace supplies untrusted structure bytes. The kernel validates length and ABI fields before queueing and uses `copy_*_user`. The device mode is 0600; injection and stats reset require `CAP_SYS_ADMIN`. Kernel logs contain no payload. Read buffer too small returns `EINVAL`, invalid pointers return `EFAULT`, empty nonblocking read returns `EAGAIN`, interrupted blocking wait returns the signal error, and full ring returns `ENOSPC`.
+Userspace supplies untrusted structure bytes. The kernel validates length, ABI fields, and kernel-assigned fields before queueing and uses `copy_*_user`. The device mode is 0600; injection is disabled by default and requires an explicit module parameter and `CAP_SYS_ADMIN`; stats reset requires `CAP_SYS_ADMIN`. Kernel logs contain no payload. Read buffer too small returns `EINVAL`, invalid pointers return `EFAULT`, empty nonblocking read returns `EAGAIN`, interrupted blocking wait returns the signal error, and full ring returns `ENOSPC`.
 
 If `copy_to_user` fails after dequeue, that record cannot be put back safely without a more elaborate reservation protocol; it is counted as dropped. Reader/writer races and unload behavior have not been runtime-tested. UAPI structure packing/compatibility must be checked on 32-bit and 64-bit userspaces before claiming cross-architecture stability.
 

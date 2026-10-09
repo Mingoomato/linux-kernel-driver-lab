@@ -27,6 +27,9 @@ struct sw_state {
 };
 
 static struct sw_state sw;
+static bool allow_lab_injection;
+module_param(allow_lab_injection, bool, 0400);
+MODULE_PARM_DESC(allow_lab_injection, "enable synthetic lab event writes (set only in an isolated VM)");
 
 static bool queue_has_data(void)
 {
@@ -103,6 +106,8 @@ static ssize_t sw_write(struct file *file, const char __user *buffer, size_t len
     int rc;
     (void)file;
     (void)offset;
+    if (!allow_lab_injection)
+        return -EOPNOTSUPP;
     if (!capable(CAP_SYS_ADMIN))
         return -EACCES;
     if (length != sizeof(event))
@@ -110,7 +115,8 @@ static ssize_t sw_write(struct file *file, const char __user *buffer, size_t len
     if (copy_from_user(&event, buffer, sizeof(event)) != 0)
         return -EFAULT;
     if (event.abi_version != SW_ABI_VERSION || event.event_type != SW_EVENT_LAB ||
-        event.payload_len > SW_MAX_PAYLOAD || event.flags != 0)
+        event.payload_len > SW_MAX_PAYLOAD || event.flags != 0 ||
+        event.sequence != 0 || event.timestamp_ns != 0)
         return -EINVAL;
     if (memchr_inv(event.payload + event.payload_len, 0, SW_MAX_PAYLOAD - event.payload_len))
         return -EINVAL;
