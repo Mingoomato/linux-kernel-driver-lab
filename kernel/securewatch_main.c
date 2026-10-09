@@ -65,26 +65,28 @@ static ssize_t sw_read(struct file *file, char __user *buffer, size_t length, lo
     (void)offset;
     if (length < sizeof(event))
         return -EINVAL;
-    if (file->f_flags & O_NONBLOCK) {
-        if (!queue_has_data())
+    for (;;) {
+        spin_lock_irqsave(&sw.lock, flags);
+        if (sw.count) {
+            event = sw.ring[sw.head];
+            memset(&sw.ring[sw.head], 0, sizeof(sw.ring[sw.head]));
+            sw.head = (sw.head + 1U) % SW_RING_CAPACITY;
+            sw.count--;
+            sw.dequeued++;
+            spin_unlock_irqrestore(&sw.lock, flags);
+            break;
+        }
+        if (sw.stopping) {
+            spin_unlock_irqrestore(&sw.lock, flags);
+            return 0;
+        }
+        spin_unlock_irqrestore(&sw.lock, flags);
+        if (file->f_flags & O_NONBLOCK)
             return -EAGAIN;
-    } else {
         rc = wait_event_interruptible(sw.readable, queue_has_data());
         if (rc)
             return rc;
     }
-    spin_lock_irqsave(&sw.lock, flags);
-    if (!sw.count) {
-        bool stopping = sw.stopping;
-        spin_unlock_irqrestore(&sw.lock, flags);
-        return stopping ? 0 : -EAGAIN;
-    }
-    event = sw.ring[sw.head];
-    memset(&sw.ring[sw.head], 0, sizeof(sw.ring[sw.head]));
-    sw.head = (sw.head + 1U) % SW_RING_CAPACITY;
-    sw.count--;
-    sw.dequeued++;
-    spin_unlock_irqrestore(&sw.lock, flags);
     if (copy_to_user(buffer, &event, sizeof(event)) != 0) {
         unsigned long restore_flags;
         spin_lock_irqsave(&sw.lock, restore_flags);

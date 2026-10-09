@@ -1,5 +1,28 @@
 # Linux Kernel Driver Lab
 
+[:kr: 한국어](#한국어) · [:us: English](#english)
+
+## 한국어
+
+이 프로젝트는 `/dev/securewatch` misc 문자 디바이스, 버전이 있는 고정 크기 UAPI, 사용자 공간 `swctl`을 구현한 커널 학습 실습입니다. 제작 의도는 `read`/`write`/`ioctl`/`poll` 경계, bounded ring buffer, wait queue와 spinlock 동기화, 사용자 포인터 검증, 모듈 자원 수명을 실제 작은 드라이버로 설명하는 것입니다. 파일 감시나 실서비스 보호 기능은 없습니다.
+
+### 빌드 및 검증
+
+```sh
+make test
+make module
+```
+
+`make test`는 사용자 공간 프로그램과 UAPI 레이아웃을 확인합니다. `make module`은 실행 중인 커널의 헤더로 모듈을 컴파일할 뿐 적재하지 않습니다. 현재 Linux `7.1.5+kali-amd64` 헤더 빌드와 `make test`가 통과했습니다. 모듈 runtime, 동시 reader/writer, overflow, KASAN/KCSAN, 두 번째 커널 매트릭스는 실행하지 않았습니다.
+
+### 격리 및 안전
+
+커널 모듈은 오류가 있으면 게스트를 멈출 수 있으므로 폐기 가능한 VM 스냅샷과 복구 콘솔에서만 로드하세요. `scripts/vm-test.sh`는 명시적 `SECUREWATCH_ALLOW_LOAD=YES`와 VM 감지 조건을 요구합니다. 현재 호스트는 VM으로 감지되지 않아 모듈을 적재하지 않았습니다. 장치 기본 권한은 `0600`, synthetic 이벤트 쓰기와 통계 초기화는 `CAP_SYS_ADMIN`이 필요합니다.
+
+현재 변경에서는 blocking `read`가 다른 reader가 이벤트를 먼저 소비한 경우 조건을 다시 확인하도록 보완했습니다. 자세한 ABI와 검증 범위는 [`docs/UAPI_VERSIONING.md`](docs/UAPI_VERSIONING.md), [`docs/TEST_RESULTS.md`](docs/TEST_RESULTS.md)를 참고하세요.
+
+## English
+
 This project contains a versioned UAPI, an out-of-tree misc character device, and a C17 client for synthetic lab events. The module has no filesystem hooks, process-memory access, hidden behavior, or production protection claims.
 
 ## Build userspace
