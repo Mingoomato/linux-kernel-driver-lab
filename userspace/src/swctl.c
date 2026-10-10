@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,9 +70,66 @@ static const char *arg(int argc, char **argv, const char *name, const char *fall
     return fallback;
 }
 
+static int parse_decimal(const char *text, unsigned long maximum, unsigned long *value) {
+    unsigned long parsed = 0;
+    if (text == NULL || *text == '\0') return -1;
+    for (const unsigned char *cursor = (const unsigned char *)text; *cursor != '\0'; ++cursor) {
+        unsigned long digit;
+        if (*cursor < '0' || *cursor > '9') return -1;
+        digit = (unsigned long)(*cursor - '0');
+        if (parsed > (maximum - digit) / 10UL) return -1;
+        parsed = parsed * 10UL + digit;
+    }
+    *value = parsed;
+    return 0;
+}
+
+static int parse_listen_options(int argc, char **argv, unsigned int *count,
+                                int *timeout_ms, const char **device) {
+    const char *count_text = "1";
+    const char *timeout_text = "1000";
+    unsigned long parsed_count = 0;
+    unsigned long parsed_timeout = 0;
+    int count_seen = 0;
+    int timeout_seen = 0;
+    int device_seen = 0;
+
+    for (int i = 2; i < argc; ++i) {
+        const char *option = argv[i];
+        const char **value = NULL;
+        int *seen = NULL;
+        if (!strcmp(option, "--count")) {
+            value = &count_text; seen = &count_seen;
+        } else if (!strcmp(option, "--timeout-ms")) {
+            value = &timeout_text; seen = &timeout_seen;
+        } else if (!strcmp(option, "--device")) {
+            value = device; seen = &device_seen;
+        } else {
+            return -1;
+        }
+        if (*seen || i + 1 >= argc) return -1;
+        *seen = 1;
+        *value = argv[++i];
+    }
+    if (parse_decimal(count_text, 1000000UL, &parsed_count) != 0 || parsed_count == 0 ||
+        parse_decimal(timeout_text, (unsigned long)INT_MAX, &parsed_timeout) != 0)
+        return -1;
+    *count = (unsigned int)parsed_count;
+    *timeout_ms = (int)parsed_timeout;
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc < 2 || !strcmp(argv[1], "--help")) { usage(); return argc < 2 ? 2 : 0; }
     const char *device = arg(argc, argv, "--device", "/dev/securewatch");
+    unsigned int listen_count = 1;
+    int listen_timeout_ms = 1000;
+    if (!strcmp(argv[1], "listen") &&
+        parse_listen_options(argc, argv, &listen_count, &listen_timeout_ms, &device) != 0) {
+        fprintf(stderr, "invalid listen options\n");
+        usage();
+        return 2;
+    }
     if (!strcmp(argv[1], "doctor")) {
         struct stat st;
         if (lstat(device, &st) != 0 || !S_ISCHR(st.st_mode)) {
@@ -105,10 +163,7 @@ int main(int argc, char **argv) {
             stats.abi_version, (unsigned long long)stats.enqueued, (unsigned long long)stats.dequeued,
             (unsigned long long)stats.dropped, (unsigned long long)stats.queued);
     } else if (!strcmp(argv[1], "listen")) {
-        unsigned long count = strtoul(arg(argc, argv, "--count", "1"), NULL, 10);
-        int timeout_ms = (int)strtol(arg(argc, argv, "--timeout-ms", "1000"), NULL, 10);
-        if (count == 0 || count > 1000000UL || timeout_ms < 0) { errno = EINVAL; rc = -1; }
-        else rc = sw_listen(fd, (unsigned int)count, timeout_ms);
+        rc = sw_listen(fd, listen_count, listen_timeout_ms);
     } else if (!strcmp(argv[1], "inject-lab-event")) {
         const char *message = arg(argc, argv, "--message", "lab-test");
         rc = sw_inject(fd, message);

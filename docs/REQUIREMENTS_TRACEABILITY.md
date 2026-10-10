@@ -21,7 +21,7 @@ Compile and UAPI layout checks passed. The module was not loaded and no privileg
 | KDL-FR-015 | no payload printk | source review pending | IMPLEMENTED |
 | KDL-FR-016 | mode 0600 | permission test pending | IMPLEMENTED |
 | KDL-FR-017 | docs and VM-only guard | smoke test verifies no-opt-in refusal; VM runtime pending | IN_PROGRESS |
-| KDL-FR-018 | swctl CLI | userspace build pending | IN_PROGRESS |
+| KDL-FR-018 | swctl CLI including strict listen argument validation | GCC/Clang `make test`, native and optional 32-bit UAPI compile, no-device CLI tests | IMPLEMENTED; device runtime pending |
 | KDL-FR-019 | docs/compatibility-matrix.md | current kernel build + native/32-bit layout compile; second kernel pending | IN_PROGRESS |
 | KDL-FR-020 | — | KASAN/KCSAN not run | NOT_STARTED |
 | KDL-FR-021 | — | optional | NOT_APPLICABLE |

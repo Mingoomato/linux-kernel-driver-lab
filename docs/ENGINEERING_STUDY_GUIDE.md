@@ -4,7 +4,7 @@
 
 This repository is a small out-of-tree Linux misc-device lab. It teaches a versioned userspace ABI, kernel/user memory boundaries, bounded queues, blocking and nonblocking reads, poll notification, ioctl validation, synchronization, and module lifecycle. It handles only synthetic records; it has no file-system hooks, process-memory access, or production protection behavior.
 
-`make test` and the module compile passed against the current Linux `7.1.5+kali-amd64` headers. The smoke checks native and `-m32` UAPI layout compilation, CLI non-device behavior, and refusal by the VM script without explicit opt-in. The module was not loaded because the current host is not detected as a VM and the qemu runtime is unavailable. Blocking `read` re-checks the ring after wakeup so concurrent readers do not return a spurious empty result; injected records now require kernel-owned sequence/timestamp fields to be zero. Runtime concurrency, load/unload, poll, overflow, copy fault, KASAN/KCSAN, 32-bit compat dispatch, and second-kernel tests remain unverified. Static 32-bit layout compilation is not a compat runtime claim.
+GCC and Clang userspace builds, `make test`, module compilation against Linux `7.1.5+kali-amd64` headers, and Clang static analysis passed. The smoke checks native and `-m32` UAPI layout compilation, strict `swctl listen` option parsing before device access, CLI non-device behavior, and refusal by the VM script without explicit opt-in. A separate userspace ASan/UBSan build and smoke run also passed. The module was not loaded because this workspace is not a disposable VM with a recovery console. Blocking `read` re-checks the ring after wakeup so concurrent readers do not return a spurious empty result; injected records require kernel-owned sequence/timestamp fields to be zero. Runtime concurrency, load/unload, poll, overflow, copy fault, KASAN/KCSAN, 32-bit compat dispatch, and second-kernel tests remain unverified. Static 32-bit layout compilation is not a compat runtime claim.
 
 ## Why each subsystem exists
 
@@ -16,7 +16,7 @@ This repository is a small out-of-tree Linux misc-device lab. It teaches a versi
 | Lock/wait queue | Protects ring indexes/counters and wakes readers when new events arrive. | `spin_lock_irqsave`, `readable`, `wake_up_interruptible` |
 | `read`/`write` operations | Separates synthetic event injection from consuming records while validating user buffers. | `sw_read`, `sw_write` |
 | `poll` and ioctl | Supports event-loop clients and a narrow management/statistics surface. | `sw_poll`, `sw_ioctl` |
-| Userspace client | Checks device and ABI, writes bounded lab messages, reads fixed records, and reports stats. | `userspace/src/swctl.c` |
+| Userspace client | Checks device and ABI, strictly parses listen bounds before opening the device, writes bounded lab messages, reads fixed records, and reports stats. | `userspace/src/swctl.c`, `parse_listen_options` |
 
 ## Data and control flow
 
@@ -28,7 +28,7 @@ This repository is a small out-of-tree Linux misc-device lab. It teaches a versi
 
 `sw_read` checks the requested user buffer length. Under the lock it either dequeues one structure, returns EOF if stopping, or observes an empty queue. Nonblocking reads return `-EAGAIN`; blocking reads sleep interruptibly on the wait queue and re-check the condition after every wake. This loop matters because multiple readers can be woken for one event and another reader may consume it first. The queue lock is released before `copy_to_user`, because copying to user memory may fault/sleep. A copy fault after dequeue is counted as a drop.
 
-The userspace client uses `poll` before `read`, validates the returned fixed-size ABI record, then formats JSON. `sw_poll` registers its wait queue with poll/epoll and reports readable data or hangup state.
+The userspace client strictly parses `--count` and `--timeout-ms` as bounded decimal values before attempting to open a device. It then uses `poll` before `read`, validates the returned fixed-size ABI record, and formats JSON. `sw_poll` registers its wait queue with poll/epoll and reports readable data or hangup state.
 
 ### Lifecycle and control
 

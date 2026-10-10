@@ -18,6 +18,42 @@ fi
 "$root_dir/userspace/swctl" --help >/dev/null
 "$root_dir/userspace/swctl" unload-check --device "$tmp/no-device"
 set +e
+"$root_dir/userspace/swctl" listen --count 1x --device "$tmp/no-device" >"$tmp/bad-count.out" 2>&1
+bad_rc=$?
+set -e
+[ "$bad_rc" -eq 2 ]
+grep -q 'invalid listen options' "$tmp/bad-count.out"
+set +e
+"$root_dir/userspace/swctl" listen --count 0 --device "$tmp/no-device" >"$tmp/zero-count.out" 2>&1
+bad_rc=$?
+set -e
+[ "$bad_rc" -eq 2 ]
+grep -q 'invalid listen options' "$tmp/zero-count.out"
+set +e
+"$root_dir/userspace/swctl" listen --timeout-ms 2147483648 --device "$tmp/no-device" >"$tmp/large-timeout.out" 2>&1
+bad_rc=$?
+set -e
+[ "$bad_rc" -eq 2 ]
+grep -q 'invalid listen options' "$tmp/large-timeout.out"
+set +e
+"$root_dir/userspace/swctl" listen --count --device "$tmp/no-device" >"$tmp/missing-count.out" 2>&1
+bad_rc=$?
+set -e
+[ "$bad_rc" -eq 2 ]
+grep -q 'invalid listen options' "$tmp/missing-count.out"
+set +e
+"$root_dir/userspace/swctl" listen --count 1 --count 2 --device "$tmp/no-device" >"$tmp/duplicate-count.out" 2>&1
+bad_rc=$?
+set -e
+[ "$bad_rc" -eq 2 ]
+grep -q 'invalid listen options' "$tmp/duplicate-count.out"
+set +e
+"$root_dir/userspace/swctl" listen --unknown --device "$tmp/no-device" >"$tmp/unknown-option.out" 2>&1
+bad_rc=$?
+set -e
+[ "$bad_rc" -eq 2 ]
+grep -q 'invalid listen options' "$tmp/unknown-option.out"
+set +e
 SECUREWATCH_ALLOW_LOAD= "$root_dir/scripts/vm-test.sh" >"$tmp/vm-guard.out" 2>&1
 guard_rc=$?
 set -e

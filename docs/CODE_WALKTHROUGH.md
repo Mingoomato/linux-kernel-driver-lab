@@ -26,6 +26,6 @@ If `copy_to_user` fails, the dequeued event is counted as dropped and the call r
 
 ## 6. Userspace client and VM harness
 
-`swctl` opens with `O_CLOEXEC | O_NOFOLLOW`. `doctor` verifies that the path is a character device, opens it nonblocking, queries ABI version, and closes it. `listen` polls and reads a fixed-size event; `inject-lab-event` writes a synthetic record. `tests/smoke.sh` compiles the client and UAPI layout but never opens a live kernel device.
+`swctl` opens with `O_CLOEXEC | O_NOFOLLOW`. `doctor` verifies that the path is a character device, opens it nonblocking, queries ABI version, and closes it. `listen` parses only bounded decimal `--count` and `--timeout-ms` values and rejects malformed or missing values before opening the device; it then polls and reads a fixed-size event. `inject-lab-event` writes a synthetic record. `tests/smoke.sh` exercises invalid listen options without opening a live kernel device.
 
 `scripts/vm-test.sh` has two explicit gates: `SECUREWATCH_ALLOW_LOAD=YES` and a positive VM detection result. It loads the module, runs smoke commands, and has an unload trap. This script has not been executed in the current non-VM environment.
