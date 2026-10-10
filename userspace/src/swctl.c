@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include <errno.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <limits.h>
 #include <poll.h>
 #include <stdio.h>
@@ -17,7 +18,13 @@ int sw_open_device(const char *path, int flags) { return open(path, flags | O_CL
 
 int sw_get_stats(int fd, struct sw_stats_v1 *stats) {
     memset(stats, 0, sizeof(*stats));
-    return ioctl(fd, SW_IOC_GET_STATS, stats);
+    if (ioctl(fd, SW_IOC_GET_STATS, stats) != 0)
+        return -1;
+    if (stats->abi_version != SW_ABI_VERSION || stats->reserved != 0) {
+        errno = EPROTO;
+        return -1;
+    }
+    return 0;
 }
 
 static int remaining_timeout_ms(const struct timespec *deadline) {

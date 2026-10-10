@@ -21,11 +21,13 @@ make module
 
 현재 변경에서는 blocking `read`가 다른 reader가 이벤트를 먼저 소비한 경우 조건을 다시 확인하고, `swctl listen`은 stale poll 뒤 `EAGAIN`을 다시 기다리며 전체 요청에 단조 시계 기반 timeout을 적용합니다. signal의 `EINTR`에도 timeout을 재시작하지 않습니다. 숫자 옵션은 장치 접근 전에 엄격히 검증합니다. `listen` JSON encoder는 quote/control과 malformed UTF-8 payload를 안전하게 표현합니다. 실습 이벤트 주입은 명시적인 모듈 옵션을 지정해야만 활성화됩니다. 자세한 ABI와 검증 범위는 [`docs/UAPI_VERSIONING.md`](docs/UAPI_VERSIONING.md), [`docs/TEST_RESULTS.md`](docs/TEST_RESULTS.md)를 참고하세요.
 
+추가 구현으로 `CONFIG_COMPAT` 커널에서 ioctl 포인터를 `compat_ptr_ioctl`로 전달하고, 사용자 공간 stats 응답의 ABI version/reserved 값을 검사합니다. 이 코드는 아직 빌드나 테스트로 재검증하지 않았습니다.
+
 사용자 주입 이벤트에서 `sequence`와 `timestamp_ns`는 0이어야 하며 커널이 값을 부여합니다. smoke 테스트는 이 규칙을 포함한 UAPI 필드 배치 및 ioctl 인코딩을 64비트와 (컴파일러 지원 시) 32비트로 검사합니다.
 
 ### 학습 패키지
 
-코드와 시스템 경계 학습 자료는 [`docs/ENGINEERING_STUDY_GUIDE.md`](docs/ENGINEERING_STUDY_GUIDE.md), [`docs/CODE_WALKTHROUGH.md`](docs/CODE_WALKTHROUGH.md), [`docs/LINUX_INTERNALS_EXPLAINED.md`](docs/LINUX_INTERNALS_EXPLAINED.md), [`docs/DEBUGGING_EXERCISES.md`](docs/DEBUGGING_EXERCISES.md), [`docs/TECHNICAL_INTERVIEW.md`](docs/TECHNICAL_INTERVIEW.md)에 있습니다. 세 독립 구현 연습은 완성 답안을 싣지 않으며, 저장소 자동 검증을 소유자 숙련도의 증거로 보지 않습니다.
+코드와 시스템 경계 학습 자료는 [`docs/ENGINEERING_STUDY_GUIDE.md`](docs/ENGINEERING_STUDY_GUIDE.md), [`docs/CODE_WALKTHROUGH.md`](docs/CODE_WALKTHROUGH.md), [`docs/LINUX_INTERNALS_EXPLAINED.md`](docs/LINUX_INTERNALS_EXPLAINED.md), [`docs/DEBUGGING_EXERCISES.md`](docs/DEBUGGING_EXERCISES.md), [`docs/TECHNICAL_INTERVIEW.md`](docs/TECHNICAL_INTERVIEW.md)에 있습니다. 세 독립 구현 연습은 완성 답안을 싣지 않으며, 기술 면접 질문 32개가 포함되어 있습니다. 저장소 자동 검증을 소유자 숙련도의 증거로 보지 않습니다.
 
 ## English
 
@@ -54,6 +56,8 @@ The guarded script first loads the module with injection disabled and confirms t
 
 The current host is not detected as a VM, so the module was compile-checked but not loaded. `swctl listen` strictly validates decimal count and timeout values before opening the device. It retries stale readiness and interruptions against one monotonic deadline, and reports expiry as `ETIMEDOUT`. Module runtime tests are not run unless a disposable VM with a snapshot and recovery console is available. The readiness environment variables are operator confirmations, not independent proof. See docs/UAPI_VERSIONING.md and docs/TEST_RESULTS.md.
 
+The latest source change adds `compat_ptr_ioctl` routing when `CONFIG_COMPAT` is enabled and validates stats ABI/reserved fields in userspace. This change has not been rebuilt or tested.
+
 ### Study package
 
-The guide, walkthrough, Linux internals explanation, three unsolved exercises, and 30 repository-specific interview questions are in [`docs/ENGINEERING_STUDY_GUIDE.md`](docs/ENGINEERING_STUDY_GUIDE.md), [`docs/CODE_WALKTHROUGH.md`](docs/CODE_WALKTHROUGH.md), [`docs/LINUX_INTERNALS_EXPLAINED.md`](docs/LINUX_INTERNALS_EXPLAINED.md), [`docs/DEBUGGING_EXERCISES.md`](docs/DEBUGGING_EXERCISES.md), and [`docs/TECHNICAL_INTERVIEW.md`](docs/TECHNICAL_INTERVIEW.md). Exercise solutions are intentionally omitted until an attempt is submitted.
+The guide, walkthrough, Linux internals explanation, three unsolved exercises, and 32 repository-specific interview questions are in [`docs/ENGINEERING_STUDY_GUIDE.md`](docs/ENGINEERING_STUDY_GUIDE.md), [`docs/CODE_WALKTHROUGH.md`](docs/CODE_WALKTHROUGH.md), [`docs/LINUX_INTERNALS_EXPLAINED.md`](docs/LINUX_INTERNALS_EXPLAINED.md), [`docs/DEBUGGING_EXERCISES.md`](docs/DEBUGGING_EXERCISES.md), and [`docs/TECHNICAL_INTERVIEW.md`](docs/TECHNICAL_INTERVIEW.md). Exercise solutions are intentionally omitted until an attempt is submitted.

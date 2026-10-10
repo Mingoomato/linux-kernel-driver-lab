@@ -43,5 +43,7 @@ Questions only; no answers are included. Kernel code must be defended with exact
 28. How does `sw_json_write_string` distinguish valid UTF-8 from malformed bytes, and what exact character does a `U+00xx` byte escape represent to a JSON consumer?
 29. Why can `poll` report readability and the following nonblocking `read` still return `EAGAIN` when multiple readers share one queue?
 30. Why should `sw_listen` use one `CLOCK_MONOTONIC` deadline across repeated `poll` calls rather than passing the original timeout after every `EINTR`?
+31. How does `compat_ptr_ioctl` translate an ioctl argument from a 32-bit process, and which parts of this UAPI make forwarding to `sw_ioctl` safe?
+32. Why should the userspace stats client check the returned ABI version and reserved field even after a successful ioctl call?
 
 Owner mastery is not inferred from automated build completion; it requires direct evidence from an independent implementation and technical defense.

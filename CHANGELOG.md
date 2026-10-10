@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added `CONFIG_COMPAT` ioctl pointer routing and userspace stats ABI/reserved-field validation. This latest source change is not built or tested yet.
 - `swctl listen` now retries stale-readiness `EAGAIN` and `EINTR` against one `CLOCK_MONOTONIC` deadline; timeout is reported as `ETIMEDOUT`.
 - Added mocked poll/read tests for retry and deadline behavior, plus explicit VM snapshot and recovery-console confirmations in the module-load harness.
 - Expanded the VM harness to prove default-off injection rejection before an opt-in event round trip; this privileged flow remains unrun on the non-VM host.

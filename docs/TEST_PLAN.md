@@ -10,5 +10,6 @@
 - In a disposable VM, exercise default-disabled injection, explicitly enabled injection, malformed kernel-owned sequence/timestamp inputs, ABI version, unknown ioctl, short read buffer, nonblocking empty read, poll wakeup, signal interruption, ring overflow, concurrent readers/writers, and 100 load/unload cycles.
 - Repeat on a second kernel; record exact config, headers, dmesg, and kernel version.
 - Run KASAN/KCSAN-enabled VM checks where available.
+- Planned, not run after the latest source change: 32-bit process to 64-bit kernel `compat_ioctl` round trips for version/stats/clear, malformed command size/direction rejection, and userspace `EPROTO` handling for mismatched stats version/reserved data.
 
 Native/32-bit UAPI compile checks and the no-opt-in loader refusal passed, and compile-only module validation passed against the current headers. The module must not be loaded on this host; runtime tests require a disposable VM with a snapshot and recovery console.

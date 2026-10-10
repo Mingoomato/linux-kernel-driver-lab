@@ -1,4 +1,7 @@
 #include <linux/capability.h>
+#ifdef CONFIG_COMPAT
+#include <linux/compat.h>
+#endif
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/module.h>
@@ -179,6 +182,9 @@ static const struct file_operations sw_fops = {
     .write = sw_write,
     .poll = sw_poll,
     .unlocked_ioctl = sw_ioctl,
+#ifdef CONFIG_COMPAT
+    .compat_ioctl = compat_ptr_ioctl,
+#endif
     .llseek = noop_llseek,
 };
 

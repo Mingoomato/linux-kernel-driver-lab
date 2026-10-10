@@ -4,7 +4,7 @@
 
 This repository is a small out-of-tree Linux misc-device lab. It teaches a versioned userspace ABI, kernel/user memory boundaries, bounded queues, blocking and nonblocking reads, poll notification, ioctl validation, synchronization, and module lifecycle. It handles only synthetic records; it has no file-system hooks, process-memory access, or production protection behavior.
 
-GCC and Clang userspace builds, `make test`, GCC and Clang module compilation against Linux `7.1.5+kali-amd64` headers, and Clang static analysis passed. The smoke checks native and `-m32` UAPI layout compilation, strict `swctl listen` option parsing before device access, JSON byte encoding, mocked stale-readiness and EINTR retries, an absolute monotonic listener deadline, CLI non-device behavior, and VM refusal without load/snapshot/recovery-console gates. A separate Clang ASan/UBSan build and smoke run also passed. The module was not loaded because this workspace is not a disposable VM with verified recovery preparation. Blocking `read` re-checks the ring after wakeup so concurrent readers do not return a spurious empty result; injected records require kernel-owned sequence/timestamp fields to be zero. Runtime concurrency, load/unload, kernel poll wakeup, overflow, copy fault, KASAN/KCSAN, 32-bit compat dispatch, and second-kernel tests remain unverified. Static 32-bit layout compilation is not a compat runtime claim.
+GCC and Clang userspace builds, `make test`, GCC and Clang module compilation against Linux `7.1.5+kali-amd64` headers, and Clang static analysis passed before the latest edits. The smoke checks native and `-m32` UAPI layout compilation, strict `swctl listen` option parsing before device access, JSON byte encoding, mocked stale-readiness and EINTR retries, an absolute monotonic listener deadline, CLI non-device behavior, and VM refusal without load/snapshot/recovery-console gates. A separate Clang ASan/UBSan build and smoke run also passed. The latest source adds `compat_ptr_ioctl` routing and userspace stats version/reserved-field checks; these changes were not built or tested. The module was not loaded because this workspace is not a disposable VM with verified recovery preparation. Blocking `read` re-checks the ring after wakeup so concurrent readers do not return a spurious empty result; injected records require kernel-owned sequence/timestamp fields to be zero. Runtime concurrency, load/unload, kernel poll wakeup, overflow, copy fault, KASAN/KCSAN, 32-bit compat dispatch, and second-kernel tests remain unverified. Static 32-bit layout compilation is not a compat runtime claim.
 
 ## Why each subsystem exists
 
@@ -16,6 +16,7 @@ GCC and Clang userspace builds, `make test`, GCC and Clang module compilation ag
 | Lock/wait queue | Protects ring indexes/counters and wakes readers when new events arrive. | `spin_lock_irqsave`, `readable`, `wake_up_interruptible` |
 | `read`/`write` operations | Separates synthetic event injection from consuming records while validating user buffers. | `sw_read`, `sw_write` |
 | `poll` and ioctl | Supports event-loop clients and a narrow management/statistics surface. | `sw_poll`, `sw_ioctl` |
+| Compat ioctl | Converts 32-bit userspace pointer arguments before calling the pointer-free fixed-width command handler. | `compat_ptr_ioctl`, `.compat_ioctl` |
 | Userspace client | Checks device and ABI, strictly parses listen bounds before opening the device, retries stale poll readiness, keeps one deadline across interruptions, writes bounded lab messages, reads fixed records, and reports stats. | `userspace/src/swctl.c`, `parse_listen_options`, `sw_listen` |
 | JSON byte encoder | Keeps a fixed UAPI payload from breaking the `listen` JSON line on quotes, controls, or malformed UTF-8. | `userspace/src/json_output.h`, `sw_json_write_string` |
 
@@ -33,7 +34,7 @@ The userspace client strictly parses `--count` and `--timeout-ms` as bounded dec
 
 ### Lifecycle and control
 
-`sw_init` zeroes state, initializes lock and wait queue, then calls `misc_register`. The file operations set `.owner = THIS_MODULE`, so an open file pins the module. `sw_exit` marks stopping, wakes waiters, deregisters the device, and emits a generic kernel message. `sw_ioctl` permits only exact version/stats/clear commands; unknown magic/commands return `ENOTTY`.
+`sw_init` zeroes state, initializes lock and wait queue, then calls `misc_register`. The file operations set `.owner = THIS_MODULE`, so an open file pins the module. `sw_exit` marks stopping, wakes waiters, deregisters the device, and emits a generic kernel message. `sw_ioctl` permits only exact version/stats/clear commands; unknown magic/commands return `ENOTTY`. On `CONFIG_COMPAT`, `compat_ptr_ioctl` converts a 32-bit argument to a userspace pointer before forwarding to this handler. The UAPI structures contain no embedded pointers and use fixed-width fields. `sw_get_stats` checks returned `abi_version` and `reserved` fields, returning `EPROTO` for an incompatible reply.
 
 ## Ownership, lifetime, concurrency
 

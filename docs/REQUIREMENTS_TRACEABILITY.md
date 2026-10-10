@@ -1,6 +1,6 @@
 # Requirements traceability (SRS-05)
 
-Compile and UAPI layout checks passed. The module was not loaded and no privileged runtime test was run. See `docs/TEST_RESULTS.md`.
+Earlier compile and UAPI layout checks passed. The latest source adds compat ioctl routing and stats response validation but was not rebuilt or tested. The module was not loaded and no privileged runtime test was run. See `docs/TEST_RESULTS.md`.
 
 | Requirement | Source / artifact | Verification | Status |
 |---|---|---|---|
@@ -8,14 +8,14 @@ Compile and UAPI layout checks passed. The module was not loaded and no privileg
 | KDL-FR-002 | module init/exit | KDL-T-002 VM pending | IN_PROGRESS |
 | KDL-FR-003 | miscdevice registration | KDL-T-002 VM pending | IMPLEMENTED |
 | KDL-FR-004 | include/uapi/securewatch_uapi.h | tests/uapi_layout.c | IMPLEMENTED |
-| KDL-FR-005 | sw_ioctl | KDL-T-003/004 pending | IMPLEMENTED |
+| KDL-FR-005 | sw_ioctl; `compat_ptr_ioctl` when CONFIG_COMPAT | Prior native ABI behavior implemented; new compat dispatch unbuilt and 32-to-64 runtime pending | IN_PROGRESS |
 | KDL-FR-006 | default-off `allow_lab_injection` module parameter, `sw_write`, CAP_SYS_ADMIN | VM harness covers default-off rejection then opted-in event round trip; not run here, KDL-T-013/015 runtime checks pending | IMPLEMENTED |
 | KDL-FR-007 | sw_read | KDL-T-005/006 pending | IMPLEMENTED |
 | KDL-FR-008 | sw_read, sw_poll | KDL-T-007/008 kernel wait/signal runtime pending; userspace stale-readiness `EAGAIN` and `EINTR` retry unit test passed | IMPLEMENTED |
 | KDL-FR-009 | fixed ring + dropped counter | KDL-T-009 pending | IMPLEMENTED |
 | KDL-FR-010 | spinlock-protected ring | KDL-T-010 VM pending | IN_PROGRESS |
 | KDL-FR-011 | fixed UAPI fields and validation; kernel-owned sequence/timestamp inputs must be zero | native and `-m32` layout checks; runtime validation pending | IN_PROGRESS |
-| KDL-FR-012 | exact ioctl allowlist | KDL-T-004 pending | IMPLEMENTED |
+| KDL-FR-012 | exact ioctl allowlist | Exact command switch; malformed encoding runtime pending; latest source not rebuilt | IN_PROGRESS |
 | KDL-FR-013 | copy_*_user only | KDL-T-014 pending | IMPLEMENTED |
 | KDL-FR-014 | owner reference, shutdown/wakeup | KDL-T-011 VM pending | IN_PROGRESS |
 | KDL-FR-015 | no payload printk | source review pending | IMPLEMENTED |

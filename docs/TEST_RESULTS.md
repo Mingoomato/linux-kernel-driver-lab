@@ -15,4 +15,6 @@ Status: userspace, UAPI layout, and compile-only module checks passed on the cur
 - After correcting blocking `read` to re-check the ring after wakeups, `make test` and `make module` were rerun and passed.
 - Runtime environment check: `systemd-detect-virt --vm` reported `none`. The module was not loaded.
 
+After those recorded results, `file_operations.compat_ioctl` was routed through `compat_ptr_ioctl` for `CONFIG_COMPAT`, and `sw_get_stats` began rejecting mismatched ABI versions/nonzero reserved fields with `EPROTO`. These latest code changes have not been built or tested; prior pass records are historical and do not cover them.
+
 Not run: module load/unload, blocking read/poll, injected-event validation, ring overflow, concurrency, KASAN/KCSAN, a second kernel version, or 32-bit-process-to-64-bit-kernel `compat_ioctl` runtime. The 32-bit compile is a layout check, not kernel compatibility proof. Runtime verification requires a disposable Linux VM with a snapshot and recovery console.

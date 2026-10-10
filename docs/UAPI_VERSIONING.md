@@ -6,4 +6,4 @@ The injection path is off by default. The isolated-VM harness explicitly enables
 
 Breaking changes require a new ABI version and a new structure/command number. Do not change field order or structure size in place. Consumers must reject unexpected versions and payload lengths.
 
-`tests/uapi_layout.c` checks field offsets, structure sizes, and ioctl encodings with native and optional `-m32` compilation. This verifies compile-time structure layout only; it does not exercise a 32-bit process against a loaded 64-bit kernel, test `compat_ioctl` dispatch, or validate multiple kernel releases.
+`tests/uapi_layout.c` checks field offsets, structure sizes, and ioctl encodings with native and optional `-m32` compilation. The file operations now route `CONFIG_COMPAT` ioctl calls through `compat_ptr_ioctl`, which is suitable for this fixed-width, pointer-free UAPI. The layout compile is still not a 32-bit process against a loaded 64-bit kernel and does not prove `compat_ioctl` dispatch or multiple kernel releases. The userspace stats helper rejects a reply with an unexpected ABI version or nonzero reserved field.
