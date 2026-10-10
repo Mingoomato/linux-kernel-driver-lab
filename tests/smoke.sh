@@ -22,6 +22,14 @@ fi
 "$compiler" $test_cflags \
     "$root_dir/tests/json_output_test.c" -o "$tmp/json-output-test"
 "$tmp/json-output-test"
+"$compiler" $test_cflags -DKDL_SWCTL_NO_MAIN -Dpoll=sw_test_poll -Dread=sw_test_read \
+    -I"$root_dir/userspace/include" -I"$root_dir/include/uapi" \
+    -c "$root_dir/userspace/src/swctl.c" -o "$tmp/swctl-listen-test.o"
+"$compiler" $test_cflags \
+    -I"$root_dir/userspace/include" -I"$root_dir/include/uapi" \
+    "$root_dir/tests/listen_client_test.c" "$tmp/swctl-listen-test.o" \
+    -o "$tmp/listen-client-test"
+"$tmp/listen-client-test"
 "$root_dir/userspace/swctl" --help >/dev/null
 "$root_dir/userspace/swctl" unload-check --device "$tmp/no-device"
 set +e
@@ -66,5 +74,20 @@ guard_rc=$?
 set -e
 [ "$guard_rc" -eq 2 ]
 grep -q 'Refusing to load kernel code' "$tmp/vm-guard.out"
+set +e
+SECUREWATCH_ALLOW_LOAD=YES SECUREWATCH_VM_SNAPSHOT_READY= \
+    "$root_dir/scripts/vm-test.sh" >"$tmp/vm-snapshot-guard.out" 2>&1
+guard_rc=$?
+set -e
+[ "$guard_rc" -eq 2 ]
+grep -q 'confirm a disposable VM snapshot' "$tmp/vm-snapshot-guard.out"
+set +e
+SECUREWATCH_ALLOW_LOAD=YES SECUREWATCH_VM_SNAPSHOT_READY=YES \
+SECUREWATCH_RECOVERY_CONSOLE_READY= \
+    "$root_dir/scripts/vm-test.sh" >"$tmp/vm-console-guard.out" 2>&1
+guard_rc=$?
+set -e
+[ "$guard_rc" -eq 2 ]
+grep -q 'confirm a recovery console' "$tmp/vm-console-guard.out"
 
 echo "KDL userspace/UAPI smoke: PASS (module not loaded)"

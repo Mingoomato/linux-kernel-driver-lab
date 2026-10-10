@@ -22,6 +22,8 @@ The wait queue expresses “data available or stopping.” A producer changes st
 
 `_IOR` and `_IO` encode direction, type, command number, and payload size into an ioctl request. A strict exact-command switch rejects unexpected encodings with `ENOTTY`. Fixed-width Linux UAPI types and explicit ABI version fields reduce layout ambiguity. The smoke suite compiles layout assertions for native and `-m32` targets; a loaded 64-bit kernel serving a 32-bit process still needs a compat runtime test. Reserved fields should remain zero and must not be repurposed casually. Event sequence and timestamp are kernel-owned: injection rejects nonzero user input, and enqueue fills them while holding the ring lock.
 
+The `swctl` listener uses `CLOCK_MONOTONIC` to set a batch deadline, then converts the remaining interval to `poll(2)` milliseconds. Wall-clock adjustments therefore do not extend or shorten the wait. `EINTR` retries against the same deadline; readiness is advisory, so `read(2)` returning `EAGAIN` means another reader won the race and the client must poll again. Expiration becomes `ETIMEDOUT`. Mocked client tests verify these cases, while actual device wakeup/signal behavior remains a VM gate.
+
 ## Queue full, signals, and copy faults
 
 When the ring is full, the kernel increments `dropped` and returns `ENOSPC`. Synthetic writes are disabled unless the load-time module parameter explicitly enables them, and they also require `CAP_SYS_ADMIN`. A blocked `wait_event_interruptible` may return an interruption code when a signal arrives. If the queue record has already been removed and `copy_to_user` fails, this implementation increments the drop count; it does not retry/requeue that event. These are visible delivery semantics, not exactly-once delivery.
@@ -34,3 +36,4 @@ When the ring is full, the kernel increments `dropped` and returns `ENOSPC`. Syn
 - [Kernel ioctl guidance](https://docs.kernel.org/driver-api/ioctl.html), [ioctl numbers](https://docs.kernel.org/userspace-api/ioctl/ioctl-number.html)
 - [Kbuild external modules](https://docs.kernel.org/kbuild/modules.html)
 - [`poll(2)`](https://man7.org/linux/man-pages/man2/poll.2.html), [`read(2)`](https://man7.org/linux/man-pages/man2/read.2.html), [`write(2)`](https://man7.org/linux/man-pages/man2/write.2.html)
+- [`clock_gettime(2)`](https://man7.org/linux/man-pages/man2/clock_gettime.2.html)

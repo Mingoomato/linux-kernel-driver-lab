@@ -41,5 +41,7 @@ Questions only; no answers are included. Kernel code must be defended with exact
 26. What is the tradeoff between dropping after a user-copy fault and implementing per-reader retry/reservation?
 27. Which runtime gate is still outstanding after module compilation succeeds?
 28. How does `sw_json_write_string` distinguish valid UTF-8 from malformed bytes, and what exact character does a `U+00xx` byte escape represent to a JSON consumer?
+29. Why can `poll` report readability and the following nonblocking `read` still return `EAGAIN` when multiple readers share one queue?
+30. Why should `sw_listen` use one `CLOCK_MONOTONIC` deadline across repeated `poll` calls rather than passing the original timeout after every `EINTR`?
 
 Owner mastery is not inferred from automated build completion; it requires direct evidence from an independent implementation and technical defense.

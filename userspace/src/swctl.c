@@ -20,18 +20,46 @@ int sw_get_stats(int fd, struct sw_stats_v1 *stats) {
     return ioctl(fd, SW_IOC_GET_STATS, stats);
 }
 
+static int remaining_timeout_ms(const struct timespec *deadline) {
+    struct timespec now;
+    if (clock_gettime(CLOCK_MONOTONIC, &now) != 0) return -1;
+    time_t seconds = deadline->tv_sec - now.tv_sec;
+    long nanoseconds = deadline->tv_nsec - now.tv_nsec;
+    if (nanoseconds < 0) {
+        --seconds;
+        nanoseconds += 1000000000L;
+    }
+    if (seconds < 0) return 0;
+    long long milliseconds = (long long)seconds * 1000LL +
+                            (nanoseconds + 999999L) / 1000000L;
+    return milliseconds > INT_MAX ? INT_MAX : (int)milliseconds;
+}
+
 int sw_listen(int fd, unsigned int count, int timeout_ms) {
     unsigned int seen = 0;
+    struct timespec deadline;
+    if (timeout_ms < 0 || clock_gettime(CLOCK_MONOTONIC, &deadline) != 0) return -1;
+    deadline.tv_sec += timeout_ms / 1000;
+    deadline.tv_nsec += (long)(timeout_ms % 1000) * 1000000L;
+    if (deadline.tv_nsec >= 1000000000L) {
+        ++deadline.tv_sec;
+        deadline.tv_nsec -= 1000000000L;
+    }
     while (seen < count) {
         struct pollfd pfd = { .fd = fd, .events = POLLIN };
-        int rc = poll(&pfd, 1, timeout_ms);
+        int remaining = remaining_timeout_ms(&deadline);
+        if (remaining < 0) return -1;
+        int rc = poll(&pfd, 1, remaining);
         if (rc < 0 && errno == EINTR) continue;
-        if (rc <= 0) return rc == 0 ? 0 : -1;
+        if (rc < 0) return -1;
+        if (rc == 0) { errno = ETIMEDOUT; return -1; }
         struct sw_event_v1 event;
         ssize_t n = read(fd, &event, sizeof(event));
         if (n < 0 && errno == EINTR) continue;
-        if (n != (ssize_t)sizeof(event)) return -1;
-        if (event.abi_version != SW_ABI_VERSION || event.payload_len > SW_MAX_PAYLOAD) {
+        if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) continue;
+        if (n != (ssize_t)sizeof(event)) { errno = EPROTO; return -1; }
+        if (event.abi_version != SW_ABI_VERSION || event.event_type != SW_EVENT_LAB ||
+            event.payload_len > SW_MAX_PAYLOAD || event.flags != 0) {
             errno = EPROTO;
             return -1;
         }
@@ -57,9 +85,12 @@ int sw_inject(int fd, const char *message) {
     event.payload_len = (uint32_t)n;
     memcpy(event.payload, message, n);
     ssize_t written = write(fd, &event, sizeof(event));
-    return written == (ssize_t)sizeof(event) ? 0 : -1;
+    if (written < 0) return -1;
+    if (written != (ssize_t)sizeof(event)) { errno = EIO; return -1; }
+    return 0;
 }
 
+#ifndef KDL_SWCTL_NO_MAIN
 static void usage(void) {
     puts("swctl doctor|version|stats|listen --count N [--timeout-ms N]|inject-lab-event --message TEXT|unload-check [--device PATH]");
 }
@@ -173,3 +204,4 @@ int main(int argc, char **argv) {
     close(fd);
     return rc == 0 ? 0 : 1;
 }
+#endif

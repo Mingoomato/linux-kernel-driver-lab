@@ -9,9 +9,9 @@ Compile and UAPI layout checks passed. The module was not loaded and no privileg
 | KDL-FR-003 | miscdevice registration | KDL-T-002 VM pending | IMPLEMENTED |
 | KDL-FR-004 | include/uapi/securewatch_uapi.h | tests/uapi_layout.c | IMPLEMENTED |
 | KDL-FR-005 | sw_ioctl | KDL-T-003/004 pending | IMPLEMENTED |
-| KDL-FR-006 | default-off `allow_lab_injection` module parameter, `sw_write`, CAP_SYS_ADMIN | KDL-T-013/015 runtime checks pending | IMPLEMENTED |
+| KDL-FR-006 | default-off `allow_lab_injection` module parameter, `sw_write`, CAP_SYS_ADMIN | VM harness covers default-off rejection then opted-in event round trip; not run here, KDL-T-013/015 runtime checks pending | IMPLEMENTED |
 | KDL-FR-007 | sw_read | KDL-T-005/006 pending | IMPLEMENTED |
-| KDL-FR-008 | sw_read, sw_poll | KDL-T-007/008 pending | IMPLEMENTED |
+| KDL-FR-008 | sw_read, sw_poll | KDL-T-007/008 kernel wait/signal runtime pending; userspace stale-readiness `EAGAIN` and `EINTR` retry unit test passed | IMPLEMENTED |
 | KDL-FR-009 | fixed ring + dropped counter | KDL-T-009 pending | IMPLEMENTED |
 | KDL-FR-010 | spinlock-protected ring | KDL-T-010 VM pending | IN_PROGRESS |
 | KDL-FR-011 | fixed UAPI fields and validation; kernel-owned sequence/timestamp inputs must be zero | native and `-m32` layout checks; runtime validation pending | IN_PROGRESS |
@@ -20,8 +20,8 @@ Compile and UAPI layout checks passed. The module was not loaded and no privileg
 | KDL-FR-014 | owner reference, shutdown/wakeup | KDL-T-011 VM pending | IN_PROGRESS |
 | KDL-FR-015 | no payload printk | source review pending | IMPLEMENTED |
 | KDL-FR-016 | mode 0600 | permission test pending | IMPLEMENTED |
-| KDL-FR-017 | docs and VM-only guard | smoke test verifies no-opt-in refusal; VM runtime pending | IN_PROGRESS |
-| KDL-FR-018 | swctl CLI including strict listen argument validation and valid JSON event output | GCC/Clang/ASan `make test`, native and optional 32-bit UAPI compile, no-device CLI and JSON byte-encoding tests | IMPLEMENTED; device runtime pending |
+| KDL-FR-017 | docs and VM-only guard | smoke verifies default refusal and missing snapshot/recovery-console confirmations; VM runtime pending | IN_PROGRESS |
+| KDL-FR-018 | swctl CLI including strict listen argument validation and valid JSON event output | GCC/Clang/ASan `make test`, native and optional 32-bit UAPI compile, no-device CLI, JSON byte-encoding and mocked poll/read retry/deadline tests | IMPLEMENTED; device runtime pending |
 | KDL-FR-019 | docs/compatibility-matrix.md | current kernel build + native/32-bit layout compile; second kernel pending | IN_PROGRESS |
 | KDL-FR-020 | — | KASAN/KCSAN not run | NOT_STARTED |
 | KDL-FR-021 | — | optional | NOT_APPLICABLE |
