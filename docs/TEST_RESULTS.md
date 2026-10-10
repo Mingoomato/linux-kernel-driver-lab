@@ -6,6 +6,7 @@ Status: userspace, UAPI layout, and compile-only module checks passed on the cur
 - Userspace C17 build with Clang: passed; GCC build was restored and used for the final `make test` run.
 - `make test`: passed; native compile-time assertions verified ABI v1 struct sizes, field offsets, and ioctl encoding; optional 32-bit (`-m32`) layout compilation passed; CLI non-device checks passed; VM loader refused to proceed without explicit opt-in.
 - `swctl listen` rejects trailing characters, zero count, missing values, duplicate/unknown options, and timeout overflow before trying to open the device; tests passed with GCC and Clang builds.
+- `swctl listen` JSON string writer tests quote/backslash and all JSON control escapes, preserves valid UTF-8, maps invalid/truncated/overlong/surrogate/out-of-range UTF-8 bytes to `U+00xx`, and rejects an invalid output argument. The standalone test ran with GCC, Clang, and Clang ASan/UBSan.
 - A separate GCC AddressSanitizer/UndefinedBehaviorSanitizer userspace build and the same CLI/UAPI smoke suite passed.
 - Clang static analysis of `userspace/src/swctl.c`: no diagnostics.
 - `make module`: passed against Linux `7.1.5+kali-amd64` headers.

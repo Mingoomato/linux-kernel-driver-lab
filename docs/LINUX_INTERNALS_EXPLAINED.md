@@ -10,6 +10,8 @@ A character device exposes file operations through a device node. The miscdevice
 
 Pointers passed to `read`, `write`, and `ioctl` originate in a userspace address space. `copy_from_user` and `copy_to_user` can fail and may fault; they return the number of bytes not copied. The driver checks that result and never dereferences a `__user` pointer directly. User copy operations happen outside the spinlock because fault handling can sleep.
 
+After a successful `read`, userspace serializes the fixed payload as a JSON string. Control bytes and quotes/backslashes require JSON escapes; malformed UTF-8 cannot be copied directly into a UTF-8 JSON document, so the encoder emits that individual byte as `U+00xx`. Well-formed UTF-8 is copied as-is. The device-free unit test checks these boundaries without requiring a loaded module.
+
 ## Ring buffer and synchronization
 
 The ring has fixed capacity and uses head/tail/count to distinguish empty/full state. A spinlock protects all compound updates so two writers cannot reserve the same slot and readers cannot race index changes. `spin_lock_irqsave` also saves/restores local interrupt state, which is a broadly safe pattern when lock users may interact with interrupt context. No sleeping operation belongs inside this critical section.

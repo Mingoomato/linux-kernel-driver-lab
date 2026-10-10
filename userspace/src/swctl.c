@@ -11,6 +11,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "sw_client.h"
+#include "json_output.h"
 
 int sw_open_device(const char *path, int flags) { return open(path, flags | O_CLOEXEC | O_NOFOLLOW); }
 
@@ -34,15 +35,13 @@ int sw_listen(int fd, unsigned int count, int timeout_ms) {
             errno = EPROTO;
             return -1;
         }
-        printf("{\"sequence\":%llu,\"event_type\":%u,\"timestamp_ns\":%llu,\"message\":\"",
+        if (printf("{\"sequence\":%llu,\"event_type\":%u,\"timestamp_ns\":%llu,\"message\":",
                (unsigned long long)event.sequence, event.event_type,
-               (unsigned long long)event.timestamp_ns);
-        for (uint32_t i = 0; i < event.payload_len; ++i) {
-            unsigned char c = event.payload[i];
-            if (c == '"' || c == '\\') putchar('\\');
-            if (c >= 0x20U) putchar(c);
+               (unsigned long long)event.timestamp_ns) < 0 ||
+            sw_json_write_string(stdout, event.payload, event.payload_len) != 0 || puts("}") == EOF) {
+            errno = EIO;
+            return -1;
         }
-        puts("\"}");
         ++seen;
     }
     return 0;

@@ -40,5 +40,6 @@ Questions only; no answers are included. Kernel code must be defended with exact
 25. Compare a miscdevice, a dedicated char-device major, and netlink for this synthetic stream.
 26. What is the tradeoff between dropping after a user-copy fault and implementing per-reader retry/reservation?
 27. Which runtime gate is still outstanding after module compilation succeeds?
+28. How does `sw_json_write_string` distinguish valid UTF-8 from malformed bytes, and what exact character does a `U+00xx` byte escape represent to a JSON consumer?
 
 Owner mastery is not inferred from automated build completion; it requires direct evidence from an independent implementation and technical defense.

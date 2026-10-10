@@ -4,17 +4,24 @@ set -eu
 root_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
+compiler=${CC:-cc}
+test_cflags=${CFLAGS:-"-O2 -std=c17 -Wall -Wextra -Wpedantic -Werror"}
 
 make -C "$root_dir" userspace
-cc -std=c17 -Wall -Wextra -Wpedantic -Werror \
+"$compiler" -std=c17 -Wall -Wextra -Wpedantic -Werror \
     -I"$root_dir/include/uapi" "$root_dir/tests/uapi_layout.c" -o "$tmp/uapi-layout"
 "$tmp/uapi-layout"
-if cc -m32 -std=c17 -Wall -Wextra -Wpedantic -Werror \
+if "$compiler" -m32 -std=c17 -Wall -Wextra -Wpedantic -Werror \
     -I"$root_dir/include/uapi" -c "$root_dir/tests/uapi_layout.c" -o "$tmp/uapi-layout-32.o"; then
     echo "KDL UAPI layout: 32-bit compile passed"
 else
     echo "KDL UAPI layout: 32-bit compiler unavailable; skipped"
 fi
+# CFLAGS is intentionally split into compiler arguments for sanitizer runs.
+# shellcheck disable=SC2086
+"$compiler" $test_cflags \
+    "$root_dir/tests/json_output_test.c" -o "$tmp/json-output-test"
+"$tmp/json-output-test"
 "$root_dir/userspace/swctl" --help >/dev/null
 "$root_dir/userspace/swctl" unload-check --device "$tmp/no-device"
 set +e

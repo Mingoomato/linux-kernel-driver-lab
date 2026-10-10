@@ -4,7 +4,7 @@ CPPFLAGS += -Iinclude -I../include/uapi
 
 all: swctl
 
-swctl: src/swctl.c ../include/uapi/securewatch_uapi.h
+swctl: src/swctl.c src/json_output.h ../include/uapi/securewatch_uapi.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ src/swctl.c
 
 clean:
