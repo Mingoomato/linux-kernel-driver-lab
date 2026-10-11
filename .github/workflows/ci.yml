@@ -1,0 +1,42 @@
+name: Build and test
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  userspace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install build and test dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential clang cmake libssl-dev libsqlite3-dev python3-jsonschema gcc-multilib
+      - name: Build userspace and run UAPI tests
+        env:
+          CC: ${{ matrix.compiler }}
+        run: make userspace test
+  kernel-compile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install kernel headers
+        run: sudo apt-get update && sudo apt-get install -y build-essential linux-headers-generic
+      - name: Compile only; no module loading on hosted runners
+        run: |
+          kernel_headers=$(find /usr/src -maxdepth 1 -type d -name 'linux-headers-*-generic' | sort -V | tail -n 1)
+          test -n "$kernel_headers"
+          make module KDIR="$kernel_headers"

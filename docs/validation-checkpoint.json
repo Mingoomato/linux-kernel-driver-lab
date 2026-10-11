@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-11",
+  "environment": "Linux 7.1.5+kali-amd64 x86_64; GCC 16.2.0; CMake Release; Python 3.14.7",
+  "result": "make userspace and make test passed; make module passed.",
+  "scope": "Native/32-bit UAPI layout, JSON output, listener retry/deadline and module compile against Linux 7.1.5+kali-amd64 headers.",
+  "remaining": "No kernel module was loaded. systemd-detect-virt returned none; disposable-VM runtime, KASAN/KCSAN and compat runtime remain blocked here.",
+  "source_sha256": {
+    "kernel/securewatch_main.c": "18247e4746f38b684868cf603cc39e27d9a2e6d3dd0ef6b8e85f3d5e2e7d10b5",
+    "userspace/src/swctl.c": "9754faf6c5decb93f59829eb1078ff934c2c4c2b881e6a47f3c110c06e4d4e0d"
+  },
+  "owner_mastery": "unassessed",
+  "remote_ci": "new_workflow_pending_remote_run"
+}

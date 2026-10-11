@@ -1,5 +1,7 @@
 # Requirements traceability (SRS-05)
 
+Latest scoped evidence: [2026-10-11 validation checkpoint](VALIDATION_CHECKPOINT.md). Historical pending/unverified rows below remain applicable to gates not exercised by that checkpoint.
+
 Earlier compile and UAPI layout checks passed. The latest source adds compat ioctl routing and stats response validation but was not rebuilt or tested. The module was not loaded and no privileged runtime test was run. See `docs/TEST_RESULTS.md`.
 
 | Requirement | Source / artifact | Verification | Status |

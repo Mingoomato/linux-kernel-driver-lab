@@ -1,5 +1,7 @@
 # Test results
 
+> Latest / 최신: [2026-10-11 checkpoint](VALIDATION_CHECKPOINT.md). Earlier entries below describe their own historical revisions; they do not override this scoped checkpoint.
+
 Status: userspace, UAPI layout, and compile-only module checks passed on the current host.
 
 - GCC and Clang userspace C17 builds: passed.
