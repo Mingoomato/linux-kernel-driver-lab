@@ -9,5 +9,6 @@
     "userspace/src/swctl.c": "9754faf6c5decb93f59829eb1078ff934c2c4c2b881e6a47f3c110c06e4d4e0d"
   },
   "owner_mastery": "unassessed",
-  "remote_ci": "new_workflow_pending_remote_run"
+  "remote_ci": "blocked_before_execution_account_billing_or_spending_limit",
+  "remote_ci_url": "https://github.com/Mingoomato/linux-kernel-driver-lab/actions/runs/38107490096"
 }
