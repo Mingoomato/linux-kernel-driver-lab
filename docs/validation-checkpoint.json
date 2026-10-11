@@ -10,5 +10,15 @@
   },
   "owner_mastery": "unassessed",
   "remote_ci": "blocked_before_execution_account_billing_or_spending_limit",
-  "remote_ci_url": "https://github.com/Mingoomato/linux-kernel-driver-lab/actions/runs/38107490096"
+  "remote_ci_url": "https://github.com/Mingoomato/linux-kernel-driver-lab/actions/runs/38107490096",
+  "local_followup": {
+    "date": "2026-10-11",
+    "host": "Kali Linux 7.1.5+kali-amd64 x86_64",
+    "gcc_release_ctest": "userspace UAPI pass",
+    "clang_release_ctest": "userspace UAPI pass",
+    "clang_asan_ubsan": "userspace UAPI pass",
+    "fuzz_smoke_requested_runs": null,
+    "kernel_module_compile": "pass_no_load",
+    "full_srs_status": "pending"
+  }
 }

@@ -33,3 +33,15 @@ No kernel module was loaded. systemd-detect-virt returned none; disposable-VM ru
 ### Remote run outcome
 
 [Run 38107490096](https://github.com/Mingoomato/linux-kernel-driver-lab/actions/runs/38107490096) was created after the source commit, but GitHub refused to start every job because of an account billing/payment or spending-limit restriction. This is **BLOCKED before execution**, not a passing remote check and not an observed compiler/test failure. No account payment or visibility settings were changed.
+
+## Current-source local verification follow-up — 2026-10-11
+
+The GitHub Actions build/test commands were run locally on Kali Linux 7.1.5+kali-amd64, x86_64, GCC 16.2.0, Clang 21.1.8 and CMake 4.4.3. This host is not the Ubuntu 24.04 runner. No kernel module was loaded.
+
+- GCC and Clang userspace/UAPI smoke: **passed**.
+- Clang AddressSanitizer + UBSan userspace/UAPI smoke: **passed**.
+- Kernel module compile against Linux 7.1.5 headers: **passed**; no load.
+
+GCC/Clang userspace/UAPI tests, Clang ASan/UBSan userspace test and module compile against Linux 7.1.5 headers pass; module runtime not attempted.
+
+The original GitHub Actions runs remain blocked before execution by account billing/spending-limit state. Current-source local results do not close the remaining full-SRS runtime, fault, scale or OS gates. Owner mastery remains unassessed.
